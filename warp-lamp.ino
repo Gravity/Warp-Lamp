@@ -2,6 +2,10 @@
 
 #define PIN 6
 
+#define DELAY_DECLARE(name) volatile unsigned long delay_variable_##name  
+#define DELAY_SET(name, time) delay_variable_##name = millis() + time  
+#define DELAY_DONE(name) (delay_variable_##name <= millis())  
+
 // Parameter 1 = number of pixels in strip
 // Parameter 2 = Arduino pin number (most are valid)
 // Parameter 3 = pixel type flags, add together as needed:
@@ -21,6 +25,9 @@ uint32_t injectorColor = strip.Color(255,255,255);
 // pixel power leads, add 300 - 500 Ohm resistor on first pixel's data input
 // and minimize distance between Arduino and first pixel.  Avoid connecting
 // on a live circuit...if you must, connect GND first.
+
+DELAY_DECLARE(warp);
+uint16_t warpOffset = 0;
 
 void setup() {
   strip.begin();
@@ -48,32 +55,42 @@ void allOn()
 
 void warp()
 {
-    for(uint16_t i=0; i<6; i++) {
-       
-        if(i != 5){
-            strip.setPixelColor(i, mainColor);
-            strip.setPixelColor(17 - i, mainColor);
-            strip.setPixelColor(12 - i, mainColor);
+
+    if(DELAY_DONE(warp)){
+
+        if(warpOffset != 5){
+            strip.setPixelColor(warpOffset, mainColor);
+            strip.setPixelColor(17 - warpOffset, mainColor);
+            strip.setPixelColor(12 - warpOffset, mainColor);
         }
         for(uint16_t j=0; j<5; j++) {
-            if(i != j){
+            if(warpOffset != j){
                 strip.setPixelColor(j, 0);
             }
         }
 
         for(uint16_t j=0; j<5; j++) {
-            if(17 - i != 17-j){
+            if(17 - warpOffset != 17-j){
                 strip.setPixelColor(17-j, 0);
             }
         }
 
         for(uint16_t j=0; j<5; j++) {
-            if(12 - i != 12-j){
+            if(12 - warpOffset != 12-j){
                 strip.setPixelColor(12-j, 0);
             }
         }
 
         strip.show();
-        delay(300);
+        // delay(300);
+
+        DELAY_SET(warp, 200);
+
+        if(warpOffset < 5){
+            warpOffset++;
+        } else {
+            warpOffset = 0;
+        }
     }
+    // }
 }
